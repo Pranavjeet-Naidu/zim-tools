@@ -13,7 +13,7 @@ const Metadata::ReservedMetadataTable reservedMetadataInfoTable = {
   { "Relation",        OPTIONAL,   0,          0,          ""                },
   { "Flavour",         OPTIONAL,   0,          0,          ""                },
   { "Source",          OPTIONAL,   0,          0,          ""                },
-  { "Counter",         OPTIONAL,   0,          0,          ""                },
+  { "Counter",         OPTIONAL,   0,          0,          COUNTER_REGEXP    },
   { "Scraper",         OPTIONAL,   0,          0,          ""                },
 
   {
