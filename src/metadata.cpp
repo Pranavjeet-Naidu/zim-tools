@@ -39,6 +39,7 @@ const bool OPTIONAL  = false;
 const std::string LANGS_REGEXP = "^\\w{3}(,\\w{3})*$";
 const std::string DATE_REGEXP = R"(^\d\d\d\d-\d\d-\d\d$)";
 const std::string PNG_REGEXP = "^\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
+const std::string COUNTER_REGEXP = R"(^([a-zA-Z]+/[a-zA-Z0-9.\-+]+=\d+)(;[a-zA-Z0-9]+/[a-zA-Z0-9.\-+]+=\d+)*;?$)";
 
 bool searchRegex(const std::string& regexStr, const std::string& text)
 {

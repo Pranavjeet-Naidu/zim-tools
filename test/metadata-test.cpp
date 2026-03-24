@@ -7,6 +7,20 @@ std::string fakePNG()
   return std::string{"\x89PNG\r\n\x1a\n"} + std::string(100, 'x');
 }
 
+#define ASSERT_VALID_COUNTER(VAL) \
+  do { \
+    zim::Metadata m = makeValidMetadata(); \
+    m.set("Counter", VAL); \
+    ASSERT_TRUE(m.valid()) << "Expected valid counter: " << VAL; \
+  } while (0)
+
+#define ASSERT_INVALID_COUNTER(VAL) \
+  do { \
+    zim::Metadata m = makeValidMetadata(); \
+    m.set("Counter", VAL); \
+    ASSERT_FALSE(m.valid()) << "Expected invalid counter: " << VAL; \
+  } while (0)
+
 TEST(Metadata, isDefaultConstructible)
 {
   zim::Metadata m;
@@ -225,4 +239,113 @@ TEST(Metadata, complexChecksAreRunOnlyIfMandatoryMetadataRequirementsAreMet)
         "LongDescription shouldn't be shorter than Description"
       })
   );
+}
+
+TEST(Metadata, counterRegexp){
+  // VALID COUNTER CHECKS
+
+  // Single entry, no trailing semicolon (Valid)
+  ASSERT_VALID_COUNTER("text/html=5");
+
+  // Single entry, with trailing semicolon (Valid)
+  ASSERT_VALID_COUNTER("text/html=5;");
+
+  // Multiple entries, strictly delimited, no spaces (Valid)
+  ASSERT_VALID_COUNTER("text/html=5;image/png=10;application/javascript=2");
+
+  // Multiple entries, strictly delimited, trailing semicolon (Valid)
+  ASSERT_VALID_COUNTER("text/html=5;image/png=10;");
+
+  // INVALID COUNTER CHECKS
+
+  // Missing semicolon between entries = invalid
+  ASSERT_INVALID_COUNTER("text/html=5image/png=10");
+
+  // Contains a space = invalid
+  ASSERT_INVALID_COUNTER("text/html=5; image/png=10;");
+
+  // Value is not a number = invalid
+  ASSERT_INVALID_COUNTER("text/html=X;");
+
+  // Invalid MIME type (missing the slash) = invalid
+  ASSERT_INVALID_COUNTER("text_html=5;");
+
+  // Missing the number entirely = invalid
+  ASSERT_INVALID_COUNTER("text/html=;");
+  // additional invalid cases, this time straight from #1000
+
+  // the exact broken string from the issue
+  // this MUST fail because it contains spaces, quotes, and singular semicolons
+  ASSERT_INVALID_COUNTER("application/javascript=4;application/pdf=3;image/apng=1;image/gif=5166;image/jpeg=280;image/png=124;image/svg+xml=8;image/svg+xml; charset=utf-8; profile=\"https://www.mediawiki.org/wiki/Specs/SVG/1.0.0\"=67381;image/webp=524540;text/css=28;text/html=50000;text/html; charset=iso-8859-1=1;text/javascript=3");
+
+  // simplified test: charset parameter leakage
+  // Fails because of the space and the semicolon inside the MIME type
+  ASSERT_INVALID_COUNTER("text/html; charset=utf-8=10;");
+
+  // fails because 'charset=utf-8;' doesn't have a valid MIME type format or a '=' count
+  ASSERT_INVALID_COUNTER("image/svg+xml=8; charset=utf-8;");
+  
+  // simplified test: profile URL leakage
+  // fails because quotes and colons are not allowed in the MIME type section
+  ASSERT_INVALID_COUNTER("image/svg+xml; profile=\"https://www.mediawiki.org...\"=67381;");
+
+  // the Corrected String ( ideally generated case )
+  // strip parameters and sum the duplicates:
+  // text/html (50000 + 1 = 50001)
+  // image/svg+xml (8 + 67381 = 673889)
+  ASSERT_VALID_COUNTER("application/javascript=4;application/pdf=3;image/apng=1;image/gif=5166;image/jpeg=280;image/png=124;image/svg+xml=673889;image/webp=524540;text/css=28;text/html=50001;text/javascript=3");
+
+  // couple more edge cases
+  ASSERT_INVALID_COUNTER("4/2=3");
+  ASSERT_INVALID_COUNTER("1.00/0.25=9");
+  ASSERT_INVALID_COUNTER("+/-=000");
+  ASSERT_INVALID_COUNTER("./..=5");
+
+  // Realistic cases: Valid real-world MIME types using [a-zA-Z0-9.\-+]
+
+  // Contains '+' 
+  ASSERT_VALID_COUNTER("image/svg+xml=8");
+  ASSERT_VALID_COUNTER("application/ld+json=10");
+
+  // Contains '-' 
+  ASSERT_VALID_COUNTER("application/x-www-form-urlencoded=42");
+  ASSERT_VALID_COUNTER("text/x-c++src=3"); // Contains both '-' and '+'
+
+  // Contains '.'
+  ASSERT_VALID_COUNTER("application/vnd.ms-excel=1");
+  ASSERT_VALID_COUNTER("application/vnd.apple.mpegurl=5");
+
+  // Contains Digits (0-9)
+  ASSERT_VALID_COUNTER("audio/mp3=100");
+  ASSERT_VALID_COUNTER("video/h264=2");
+
+  // Contains Uppercase (A-Z)
+  ASSERT_VALID_COUNTER("image/JPEG=5");
+  ASSERT_VALID_COUNTER("application/PDF=10");
+
+  // cases that pass validation but unlikely to be real MIME types
+  // These test the full extent of the [a-zA-Z0-9.\-+] character class boundaries
+
+  // single special characters
+  ASSERT_VALID_COUNTER("a/+++=1");
+  ASSERT_VALID_COUNTER("a/...=1");
+  ASSERT_VALID_COUNTER("a/---=1");
+
+  // numbers or uppercase only
+  ASSERT_VALID_COUNTER("a/0123456789=1");
+  ASSERT_VALID_COUNTER("a/ABCDEFGHIJKLMNOPQRSTUVWXYZ=1");
+
+  // Mixed special chars only
+  ASSERT_VALID_COUNTER("a/.+-=1");
+  ASSERT_VALID_COUNTER("a/0.0-0+0=42");
+
+  // Extreme combinations
+  ASSERT_VALID_COUNTER("x/Z+9.8-7.6+5-4.3+2-1.0=1");
+
+  // Single character subtypes using each class
+  ASSERT_VALID_COUNTER("a/A=1");
+  ASSERT_VALID_COUNTER("a/0=1");
+  ASSERT_VALID_COUNTER("a/.=1");
+  ASSERT_VALID_COUNTER("a/-=1");
+  ASSERT_VALID_COUNTER("a/+=1");
 }
