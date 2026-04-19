@@ -224,6 +224,8 @@ int zimcheck(const Options& args)
             zim::Archive archive( filename );
             error.addInfo("file_uuid",  stringify(archive.getUuid()));
 
+            error.startLogStream();
+
             //Test 1: Internal Checksum
             if(enabled_tests.isEnabled(TestType::CHECKSUM)) {
                 if ( enabled_tests.isEnabled(TestType::INTEGRITY) ) {
@@ -280,6 +282,11 @@ int zimcheck(const Options& args)
 
             if ( enabled_tests.isEnabled(TestType::REDIRECT))
                 test_redirect_loop(archive, error);
+
+                error.endLogStream();
+        } else {
+            error.startLogStream();
+            error.endLogStream();
         }
 
         const bool overallStatus = error.overallStatus();

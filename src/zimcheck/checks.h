@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <bitset>
+#include <mutex>
 
 #include <mustache.hpp>
 
@@ -76,9 +77,9 @@ class ErrorLogger {
       MsgId msgId;
       MsgParams msgParams;
     };
-
-    // reportMsgs[i] holds messages for the i'th test/check
-    std::vector<std::vector<MsgIdWithParams>> reportMsgs;
+  private:
+    std::mutex print_mutex;
+    bool logStreamOpen = false;
 
     // testStatus[i] corresponds to the status of i'th test
     std::bitset<size_t(TestType::COUNT)> testStatus;
@@ -105,6 +106,9 @@ class ErrorLogger {
     void addMsg(MsgId msgid, const MsgParams& msgParams);
     void report(bool error_details) const;
     bool overallStatus() const;
+
+    void startLogStream();
+    void endLogStream();  
 };
 
 
