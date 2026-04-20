@@ -104,7 +104,6 @@ class ErrorLogger {
 
     void setTestResult(TestType type, bool status);
     void addMsg(MsgId msgid, const MsgParams& msgParams);
-    void report(bool error_details) const;
     bool overallStatus() const;
 
     void startLogStream();

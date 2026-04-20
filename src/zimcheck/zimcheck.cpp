@@ -126,7 +126,6 @@ int zimcheck(const Options& args)
 
     bool run_all = false;
     EnabledTests enabled_tests;
-    bool error_details = false;
     bool no_args = true;
     bool json = false;
     int thread_count = 1;
@@ -175,8 +174,6 @@ int zimcheck(const Options& args)
         } else if (arg.first == "--redirect_loop" && arg.second.asBool()) {
             enabled_tests.enable(TestType::REDIRECT);
             no_args = false;
-        } else if (arg.first == "--details") {
-            error_details = arg.second.asBool();
         } else if (arg.first == "--json") {
             json = arg.second.asBool();
         } else if (arg.first == "--threads") {
@@ -283,7 +280,7 @@ int zimcheck(const Options& args)
             if ( enabled_tests.isEnabled(TestType::REDIRECT))
                 test_redirect_loop(archive, error);
 
-                error.endLogStream();
+            error.endLogStream();
         } else {
             error.startLogStream();
             error.endLogStream();
@@ -291,7 +288,7 @@ int zimcheck(const Options& args)
 
         const bool overallStatus = error.overallStatus();
         error.addInfo("status", overallStatus);
-        error.report(error_details);
+
         if( overallStatus )
         {
             error.infoMsg("[INFO] Overall Test Status: Pass");

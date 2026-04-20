@@ -207,9 +207,6 @@ void ErrorLogger::jsonOutput(const MsgIdWithParams& msg) const {
   jsonOutputStream << JSON::endObject;
 }
 
-void ErrorLogger::report(bool error_details) const {
-}
-
 bool ErrorLogger::overallStatus() const {
     for ( size_t i = 0; i < size_t(TestType::COUNT); ++i ) {
         if (errormapping[TestType(i)].first == LogTag::ERROR) {
