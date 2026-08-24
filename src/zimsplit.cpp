@@ -27,6 +27,7 @@
 #include <docopt/docopt.h>
 
 #include "version.h"
+#include "zimsplit_size.h"
 
 #define BUFFER_SIZE 4096
 
@@ -68,6 +69,7 @@ class ZimSplitter
         ifile(fname, std::ios::binary),
         currentPartSize(0)
       {
+        validatePartSize(maxPartSize, archive.getFilesize());
         batch_buffer = new char[BUFFER_SIZE];
     }
 
