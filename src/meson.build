@@ -26,8 +26,8 @@ executable('zimpatch', ['zimpatch.cpp', 'tools.cpp'],
   dependencies: [libzim_dep, icu_uc_dep, icu_dep],
   install: true)
 
-executable('zimsplit', ['zimsplit.cpp', 'zimsplit_size.cpp'],
-  dependencies: [libzim_dep, docopt_dep],
+executable('zimsplit', ['zimsplit.cpp', 'zimsplit_size.cpp', 'tools.cpp'],
+  dependencies: [libzim_dep, docopt_dep, icu_uc_dep, icu_dep],
   install: true)
 
 executable('zimrecreate', ['zimrecreate.cpp', 'tools.cpp'],

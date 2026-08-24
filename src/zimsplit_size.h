@@ -21,7 +21,9 @@
 #define OPENZIM_ZIMSPLIT_SIZE_H
 
 #include <cstdint>
+#include <string>
 
+uint64_t parseByteSize(std::string value);
 void validatePartSize(uint64_t partSize, uint64_t archiveSize);
 
 #endif
