@@ -7,6 +7,7 @@
 #include <cassert>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <sstream>
 #include <atomic>
@@ -52,6 +53,7 @@ std::unordered_map<MsgId, MsgInfo> msgTable = {
   { MsgId::OUTOFBOUNDS_LINK, { TestType::URL_INTERNAL, "{{&link}} is out of bounds. Article: {{&path}}" } },
   { MsgId::ABSPATH_LINK,     { TestType::URL_INTERNAL, "{{&link}} is an absolute path link. Article: {{&path}}" } },
   { MsgId::DANGLING_LINKS,   { TestType::URL_INTERNAL, "Dangling link(s) in article '{{&path}}':\n{{#links}}  - '{{&value}}' (resolves to '{{&normalized_link}}')\n{{/links}}" } },
+  { MsgId::BROKEN_ANCHOR,    { TestType::URL_INTERNAL, "{{&link}} has a broken anchor. Article: {{&path}}" } },
   { MsgId::EXTERNAL_LINK,    { TestType::URL_EXTERNAL, "{{&link}} is an external dependence in article {{&path}}" } },
   { MsgId::EMPTY_LINKS,      { TestType::URL_EMPTY, "Found {{&count}} empty links in article: {{&path}}" } },
   { MsgId::REDUNDANT_ITEMS,  { TestType::REDUNDANT, "{{&path1}} and {{&path2}}" } },
@@ -305,6 +307,7 @@ public: // functions
         , progress(_progress)
         , options(_options)
         , linkStatusCache(64*1024)
+        , anchorIdsCache(64*1024)
     {
         progress.reset(archive.getEntryCount());
     }
@@ -332,6 +335,25 @@ private: // functions
       });
     }
 
+    bool has_anchor(const std::string& targetPath, const std::string& fragment)
+    {
+        if (fragment.empty())
+            return true;
+        const auto ids = anchorIdsCache.getOrPut(targetPath, [this, &targetPath]() {
+            if (!archive.hasEntryByPath(targetPath))
+                return std::unordered_set<std::string>{};
+            try {
+                const auto item = archive.getEntryByPath(targetPath).getItem();
+                if (item.getMimetype() != "text/html")
+                    return std::unordered_set<std::string>{};
+                return generic_getAnchorIds(item.getData());
+            } catch (...) {
+                return std::unordered_set<std::string>{};
+            }
+        });
+        return ids.find(fragment) != ids.end();
+    }
+
 private: // data
     const zim::Archive& archive;
     ErrorLogger& reporter;
@@ -343,6 +365,7 @@ private: // data
     std::map<unsigned int, std::list<zim::entry_index_type>> hash_main;
 
     zim::ConcurrentCache<std::string, bool> linkStatusCache;
+    zim::ConcurrentCache<std::string, std::unordered_set<std::string>> anchorIdsCache;
 };
 
 void ArticleChecker::check(zim::Entry entry)
@@ -413,9 +436,17 @@ void ArticleChecker::check_internal_links(zim::Item item, const LinkCollection& 
             nremptylinks++;
             continue;
         }
-        if (l.link.front() == '#' || l.link.front() == '?') continue;
+        if (l.link.front() == '?') continue;
         if (l.isInternalUrl() == false) continue;
 
+        const auto fragment = extract_link_fragment(l.link);
+
+        if (l.link.front() == '#') {
+            if (!has_anchor(path, fragment)) {
+                reporter.addMsg(MsgId::BROKEN_ANCHOR, {{"link", l.link}, {"path", path}});
+            }
+            continue;
+        }
 
         std::string resolved;
         try {
@@ -428,7 +459,16 @@ void ArticleChecker::check_internal_links(zim::Item item, const LinkCollection& 
             continue;
         }
 
+<<<<<<< HEAD
         groupedLinks[resolved].push_back(l.link);
+=======
+        auto normalized = normalize_link(l.link, baseUrl);
+        groupedLinks[normalized].push_back(l.link);
+
+        if (!fragment.empty() && is_valid_internal_link(normalized) && !has_anchor(normalized, fragment)) {
+            reporter.addMsg(MsgId::BROKEN_ANCHOR, {{"link", l.link}, {"path", path}});
+        }
+>>>>>>> a8884aa (feat(zimcheck): validate local HTML anchor links (#120))
     }
 
     if (nremptylinks)

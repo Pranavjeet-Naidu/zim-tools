@@ -23,7 +23,11 @@
 
 #include <map>
 #include <string>
+<<<<<<< HEAD
 #include <string_view>
+=======
+#include <unordered_set>
+>>>>>>> a8884aa (feat(zimcheck): validate local HTML anchor links (#120))
 #include <vector>
 #include <stdexcept>
 #include <sstream>
@@ -197,6 +201,18 @@ void stripTitleInvalidChars(std::string& str);
 //Returns a vector of the links in a particular page. includes links under 'href' and 'src'
 std::vector<html_link> generic_getLinks(const std::string& page);
 
+<<<<<<< HEAD
+=======
+//same scan as generic_getLinks
+std::unordered_set<std::string> generic_getAnchorIds(const std::string& page);
+
+// Returns percent-decoded fragment from url (after '#'), or empty string if none.
+std::string extract_link_fragment(const std::string& url);
+
+// checks if a relative path is out of bounds (relative to base)
+bool isOutofBounds(const std::string& input, std::string base);
+
+>>>>>>> a8884aa (feat(zimcheck): validate local HTML anchor links (#120))
 //Adler32 Hash Function. Used to hash the BLOB data obtained from each article, for redundancy checks.
 //Please note that the adler32 hash function has a high number of collisions, and that the hash match is not taken as final.
 int adler32(const std::string& buf);
