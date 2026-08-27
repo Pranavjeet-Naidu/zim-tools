@@ -459,16 +459,11 @@ void ArticleChecker::check_internal_links(zim::Item item, const LinkCollection& 
             continue;
         }
 
-<<<<<<< HEAD
         groupedLinks[resolved].push_back(l.link);
-=======
-        auto normalized = normalize_link(l.link, baseUrl);
-        groupedLinks[normalized].push_back(l.link);
 
-        if (!fragment.empty() && is_valid_internal_link(normalized) && !has_anchor(normalized, fragment)) {
+        if (!fragment.empty() && is_valid_internal_link(resolved) && !has_anchor(resolved, fragment)) {
             reporter.addMsg(MsgId::BROKEN_ANCHOR, {{"link", l.link}, {"path", path}});
         }
->>>>>>> a8884aa (feat(zimcheck): validate local HTML anchor links (#120))
     }
 
     if (nremptylinks)

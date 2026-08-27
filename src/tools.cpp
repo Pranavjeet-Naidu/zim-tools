@@ -33,13 +33,10 @@
 #include <algorithm>
 #include <regex>
 #include <array>
-<<<<<<< HEAD
 #include <unicode/brkiter.h>
 #include <unicode/utypes.h>
 #include <unicode/unistr.h>
-=======
 #include <unordered_set>
->>>>>>> a8884aa (feat(zimcheck): validate local HTML anchor links (#120))
 
 #ifdef _WIN32
 #define SEPARATOR "\\"
@@ -449,8 +446,6 @@ std::vector<html_link> generic_getLinks(const std::string& page)
     return links;
 }
 
-<<<<<<< HEAD
-=======
 namespace
 {
 
@@ -531,7 +526,6 @@ bool isOutofBounds(const std::string& input, std::string base)
     return nrsteps >= (nr + std::count(base.cbegin(), base.cend(), '/'));
 }
 
->>>>>>> a8884aa (feat(zimcheck): validate local HTML anchor links (#120))
 int adler32(const std::string& buf)
 {
     unsigned int s1 = 1;
